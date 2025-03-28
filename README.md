@@ -1,4 +1,4 @@
-Mensch-Computer-Interaktion Übungsblatt 2 Sommersemester 2018 bei Dr. Bastian Pfleging an der Universität Stuttgart . Aufgabenstellung kann in .pdf eingesehen werden (Task B). Vorsicht evtl. sehr laute Töne in Task B1
+Mensch-Computer-Interaktion Übungsblatt 2 Sommersemester 2018 bei Dr. Bastian Pfleging an der Universität Stuttgart . Aufgabenstellung war wie folgt:
 ## B) Programmieren eines Reaktionszeitexperiments [index.html](index.html)
 
 In dieser Aufgabe werden einfache kognitive Prozesse untersucht. Dazu wird die
@@ -43,7 +43,7 @@ Alternativ kann auch die Programmiersprache Processing
 bis 6 Sekunden kein Stimulus dargestellt werden. Anschließend soll der
 nächste Stimulus dargestellt werden.
 
-## B.1) Einfaches Reaktionszeit-Experiment [b_1.html](b_1.html)
+## B.1) Einfaches Reaktionszeit-Experiment [b_1.html](b_1.html) ⚠️ Audioausgabe ist evtl. sehr laut
 
 
 Es sollen zwei unterschiedliche Stimuli dargestellt werden, um die
