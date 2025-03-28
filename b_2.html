@@ -1,0 +1,172 @@
+<html>
+   <head>
+      <title>Human Capabilities - Reaction test</title>
+   </head>
+   <body>
+      <script type="text/javascript">
+         var experimentActive = false; var testActive = false;
+         var times = new Array();
+		 var type = new Array();
+         var lastTimeColorChanged;
+		 var errors = 0;
+		 var timeID;
+		 var lastRecWidth= 0;
+		 var wasCircle = false;
+		 var timeoutCounter;
+         
+         function startExperiment() {
+         	experimentActive = true; 
+         	document.getElementById("time").innerHTML = "";
+          	document.getElementById("count").innerHTML = "";
+			document.getElementById("mean").innerHTML = "";
+          	document.getElementById("sds").innerHTML = "";
+			document.getElementById("errors").innerHTML = "";
+          	document.getElementById("instruction").innerHTML = "Press SPACE when a triangle is displayed! Press 'a' for results!";
+			timeoutCounter = 0;
+         	startTest();
+         }
+         
+         function startTest() {
+         	timeInSeconds = Math.random() * 4 + 2; // 2 - 6s 
+         	timeID= window.setTimeout("showStimulus()", timeInSeconds * 1000);
+         }
+         
+         function showStimulus() { 
+         	testActive = true;
+			var decideStimuli = Math.round(Math.random(2));
+			switch(decideStimuli){
+				case 0: //draw triangle go
+				type.push(decideStimuli);
+					var c = document.getElementById("canvas");
+					var context = c.getContext("2d");
+					var firstPoint = Math.random()*(350-150)+150;
+					var secondPoint = Math.random()*(350-150)+150;
+					context.beginPath();
+					context.moveTo(200,50);
+					context.lineTo(350, firstPoint);
+					context.lineTo((200-(secondPoint/2)),firstPoint);
+					context.closePath();
+					context.fillStyle="#F9A520";
+					context.strokeStyle="#F9A520";
+					context.fill();
+					context.stroke();
+					lastTimeColorChanged = new Date().getTime();
+					timeInSeconds = 4;
+					stopTimeID = window.setTimeout("stopTest(true)", timeInSeconds * 1000);
+					break;
+				case 1: //draw circle no go
+					type.push(decideStimuli);
+					var c = document.getElementById("canvas");			
+					var context = c.getContext("2d");
+					var diameter = Math.random()*(350-150)+150;
+					context.fillStyle = "#000000";
+					context.beginPath();					
+					context.arc(250,200,(diameter/2),0, 2*Math.PI);			
+					context.fill();
+					lastTimeColorChanged = new Date().getTime();
+					wasCircle=true;
+					timeInSeconds = 4;
+					stopTimeID = window.setTimeout("stopTest(true)", timeInSeconds * 1000);
+					break;
+			}
+         	
+         }
+         
+         function stopTest(wasTimeout) {
+			window.clearTimeout(stopTimeID);
+         	if(!wasCircle && !wasTimeout){ //korrekter Tastendruck
+				var currTime = new Date().getTime();
+				var deltaTime = currTime - lastTimeColorChanged;
+				times.push(deltaTime);
+				document.getElementById("time").innerHTML = deltaTime + "ms";  
+				document.getElementById("count").innerHTML = times.length+timeoutCounter;
+			}else if(!wasCircle && wasTimeout){//Zweit abgelaufen
+				timeoutCounter++;
+				errors++;
+				document.getElementById("time").innerHTML = deltaTime + "ms";  
+				document.getElementById("count").innerHTML = times.length+timeoutCounter;
+			}else if(wasCircle && wasTimeout){//korrekt gewartet
+				timeoutCounter++;
+				document.getElementById("time").innerHTML = deltaTime + "ms";  
+				document.getElementById("count").innerHTML = times.length+timeoutCounter;
+			}else{ //anderweitiger Fehler
+				timeoutCounter++;
+				document.getElementById("time").innerHTML = deltaTime + "ms";  
+				document.getElementById("count").innerHTML = times.length+timeoutCounter;
+			}  		
+			var c = document.getElementById("canvas");
+			var context = c.getContext("2d");
+			wasCircle=false;
+			context.clearRect(0,0,c.width,c.height);
+         	testActive = false;
+         	startTest();
+         }
+         
+         function stopExperiment() { 
+         	window.clearTimeout(timeID);
+			window.clearTimeout(stopTimeID);
+         	testActive = false;
+         	var meanDeltaTime = 0.0;
+         	for (var i = 0; i < times.length; ++i) {
+						meanDeltaTime += times[i];
+				}
+         	meanDeltaTime = Math.round(meanDeltaTime / times.length);
+			var  standardDerivation = 0.0;
+         	for (var i = 0; i < times.length; ++i) {
+						var diff = (times[i] - meanDeltaTime);
+						standardDerivation += diff * diff;
+         	}
+			standardDerivation = Math.round(Math.sqrt(standardDerivation/times.length));
+         	document.getElementById("count").innerHTML = "Count: " + (times.length+timeoutCounter);
+			document.getElementById("mean").innerHTML = "Mean: " + meanDeltaTime + "ms";
+         	document.getElementById("sds").innerHTML = "SD: " + standardDerivation + "ms";
+			document.getElementById("errors").innerHTML = "Errors: " + errors
+         	document.getElementById("instruction").innerHTML = "Press SPACE to start!"; 
+         	times = [];
+			errors = 0;
+         	experimentActive = false; 
+         }
+         
+         document.onkeydown = onKey;
+         function onKey(e) { if (e == null) {
+                 e = window.event;
+             }
+         	switch (e.which || e.charCode || e.keyCode) { 
+         		case 32:
+         		// space
+         		if (!experimentActive) {
+         			startExperiment(); } 
+         			else {
+         				if (testActive && !wasCircle) {
+         					stopTest(false);
+         				}else{
+							errors++;
+							stopTest(false);
+						}
+         			}
+         		break;
+         		case 65: // a
+         		if (experimentActive) {
+         			stopExperiment(); 
+         		}
+         		break;
+         		case 66:
+         		// b
+         		// here you can extend... alert("pressed the b key"); break;
+         	} 
+         }
+      </script>
+      <h1>
+         <p id="text">User Study</p>
+      </h1>
+	  <canvas id="canvas" width="800" height="500"></canvas>
+      <h1 id="instruction">Press SPACE to start!</h1>
+      <p>
+	  
+      <p id="time"></p>
+      <p id="count"></p>
+	  <p id="mean"></p>
+      <p id="sds"></p>
+	  <p id="errors"></p>
+   </body>
+</html>

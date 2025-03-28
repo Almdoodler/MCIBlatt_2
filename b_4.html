@@ -1,0 +1,205 @@
+<html>
+   <head>
+      <title>Human Capabilities - Reaction test</title>
+   </head>
+   <body>
+      <script type="text/javascript">
+         var experimentActive = false; var testActive = false;
+         var times = new Array();
+		 var mammals = ["Schimpanse", "Tiger", "Hund", "Katze", "Maus", "Eisbär", "Delfin", "Blauwal", "Gorilla", "Schnabeltier"];
+		 var nonMammals = ["Ente", "Barsch", "Spatz", "Adler", "Aal", "Vogelspinne", "Kobra", "Python"];
+         var lastTimeColorChanged;
+		 var errors;
+		 var timeouts;
+		 var isMammal;
+		 var startTimeID;
+		 var stopTimeID;
+		 var score;
+		 
+		 var score = {
+			score: 0, error: 0, mean:0, sd:0, times:[]
+		 }
+         
+         function startExperiment() {
+         	experimentActive = true;
+			isMammal = false;
+			errors=0;
+			timeouts = 0;
+         	document.getElementById("time").innerHTML = "";
+          	document.getElementById("count").innerHTML = ""; 
+          	document.getElementById("mean").innerHTML = ""; 
+          	document.getElementById("sd").innerHTML = ""; 
+			document.getElementById("error").innerHTML = "";
+          	startTimeID=document.getElementById("instruction").innerHTML = "Press T when the name of a mammal is displayed, press F when the name of a non-mammal is displayd! Press 'a' for results!";
+			clearCanvas();
+         	startTest();
+         }
+         
+         function startTest() {
+         	var timeInSeconds = Math.random() * 4 + 2; // 2 - 6s 
+         	startTimeID = window.setTimeout("showStimulus()", timeInSeconds * 1000);
+         }
+         
+         function showStimulus() { 
+         	testActive = true;
+			var chooseArray=Math.round(Math.random());
+			switch(chooseArray){
+				case 0: //mammals
+					isMammal = true;
+					var index = Math.round(Math.random()*(mammals.length-1));
+					var c = document.getElementById("anzeige");
+					var context = c.getContext("2d");
+					context.font = "30px Arial";
+					context.fillText(mammals[index], 100,100);
+					lastTimeColorChanged = new Date().getTime();
+					var timeInSeconds = 4
+					stopTimeID = window.setTimeout("stopTest(true, true)", timeInSeconds * 1000);
+					break;
+				case 1: //nonMammals
+					var index = Math.round(Math.random()*(nonMammals.length-1));
+					var c = document.getElementById("anzeige")
+					var context = c.getContext("2d");
+					context.font = "30px Arial";
+					context.fillText(nonMammals[index], 100,100);
+					lastTimeColorChanged = new Date().getTime();
+					var timeInSeconds = 4
+					stopTimeID = window.setTimeout("stopTest(true, true)", timeInSeconds * 1000);
+					break;
+			}
+         }
+         
+         function stopTest(wasError, wasTimeout) {
+			window.clearTimeout(startTimeID);
+			window.clearTimeout(stopTimeID);
+         	if(!wasError && !wasTimeout){ //korrekt
+				var currTime = new Date().getTime();
+				var deltaTime = currTime - lastTimeColorChanged; 
+				times.push(deltaTime); 
+				document.getElementById("time").innerHTML = deltaTime + "ms"; 
+				document.getElementById("count").innerHTML = times.length;
+			}else if(wasError && wasTimeout){ //timeout
+				timeouts++;
+				errors++;
+			}else{ //falsch gedrückt
+				errors++;
+				var currTime = new Date().getTime();
+				var deltaTime = currTime - lastTimeColorChanged; 
+				times.push(deltaTime); 
+				document.getElementById("time").innerHTML = deltaTime + "ms";
+				document.getElementById("count").innerHTML = times.length;
+			}
+			clearCanvas();			
+         	testActive = false;
+			isMammal = false;
+         	startTest();
+         }
+         
+         function stopExperiment() {
+         	testActive = false;
+			window.clearTimeout(startTimeID);
+			window.clearTimeout(stopTimeID);
+         	var meanDeltaTime = 0.0;
+         	for (var i = 0; i < times.length; ++i) {
+         		meanDeltaTime += times[i]; }
+         	meanDeltaTime = Math.round(meanDeltaTime / times.length);
+         	var standardDerivation = 0.0;
+         	for (var i = 0; i < times.length; ++i) {
+         		var diff = (times[i] - meanDeltaTime);
+         		standardDerivation += diff * diff; }
+         	standardDerivation =  Math.round(Math.sqrt(standardDerivation / times.length)); 
+         	document.getElementById("count").innerHTML = "Count: " + (times.length+timeouts); 
+         	document.getElementById("mean").innerHTML = "Mean: " + meanDeltaTime + "ms"; 
+         	document.getElementById("sd").innerHTML = "SD: " + standardDerivation + "ms"; 
+			document.getElementById("error").innerHTML = "Errors: " + errors;
+         	document.getElementById("instruction").innerHTML = "Press SPACE to start! Press ENTER to download your score!";
+			score.score = (times.length+timeouts);
+			score.error = errors;
+			score.mean = meanDeltaTime;
+			score.sd = standardDerivation;
+			score.times = times;
+			clearCanvas();
+         	times = [];
+         	experimentActive = false; 
+         }
+		 
+		 function clearCanvas(){
+			var c= document.getElementById("anzeige");
+			var context = c.getContext("2d");
+			context.clearRect(0,0,c.width,c.height);
+		 }		 
+		 /**
+			Lade Momentanen Score herunter
+		 **/
+		 function download(content, fileName, contentType) {
+			var a = document.createElement("a");
+			var file = new Blob([content], {type: contentType});
+			a.href = URL.createObjectURL(file);
+			a.download = fileName;
+			a.click();
+		}
+         
+         document.onkeydown = onKey;
+         function onKey(e) { if (e == null) {
+                 e = window.event;
+             }
+         	switch (e.which || e.charCode || e.keyCode) { 
+         		case 32:
+         		// space
+					if (!experimentActive) {
+						startExperiment(); 
+					} 
+					break;
+				case 65: // a
+					if (experimentActive) {
+						stopExperiment(); 
+					}
+					break;
+         		case 66:
+					break;
+				case 84: //T
+					if(experimentActive && testActive){
+						if(isMammal){
+							stopTest(false,false);
+						}else{
+							stopTest(true,false);
+						}						
+					}
+					else if(experimentActive && !testActive){
+						errors++;
+					}
+					break;
+				case 70: //F
+					if(experimentActive && testActive){
+						if(isMammal){
+							stopTest(true,false);
+						}else{
+							stopTest(false,false);
+						}						
+					}else if(experimentActive && !testActive){
+						errors++;
+					}
+					break;
+				case 13: //ENTER
+					if(!experimentActive){
+						var myJSON = JSON.stringify(score);
+						download(myJSON, "yourScore.json", "text/plain");
+					}
+					break;
+         		// b
+         		// here you can extend... alert("pressed the b key"); break;
+         	} 
+         }
+      </script>
+      <h1>
+         <p id="text">User Study</p>
+      </h1>
+	  <canvas id="anzeige" height=200, width=600></canvas>
+      <h1 id="instruction">Press SPACE to start!</h1>
+      <p>
+      <p id="time"></p>
+      <p id="count"></p>
+      <p id="mean"></p>
+      <p id="sd"></p>
+	  <p id="error"></p>
+   </body>
+</html>

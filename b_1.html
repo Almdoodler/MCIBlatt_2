@@ -1,0 +1,187 @@
+<html>
+   <head>
+      <title>Human Capabilities - Reaction test</title>
+   </head>
+   <body>
+      <script type="text/javascript">
+         var experimentActive = false; var testActive = false;
+         var times = new Array();
+		 var type = new Array();
+         var lastTimeColorChanged;
+		 var errors = 0;
+		 var sErrors = 0;
+		 var pErrors = 0;
+		 var startTimeID;
+		 var wasPicture = false;
+		 var timeoutCounter = 0;
+         
+         function startExperiment() {
+         	experimentActive = true; 
+         	document.getElementById("time").innerHTML = "";
+          	document.getElementById("count").innerHTML = ""; 
+          	document.getElementById("mean sound stimulus").innerHTML = ""; 
+			document.getElementById("mean pic stimulus").innerHTML = ""; 
+          	document.getElementById("sds").innerHTML = "";
+			document.getElementById("sdp").innerHTML = "";
+			document.getElementById("errors").innerHTML = "";
+			document.getElementById("sErrors").innerHTML = "";
+			document.getElementById("pErrors").innerHTML = "";
+          	document.getElementById("instruction").innerHTML = "Press SPACE when one of the stimuli is triggered! Press 'a' for results!";
+         	startTest();
+         }
+         
+         function startTest() {
+			var image = new Image(200, 200);
+			image.src = 'Test.png';
+			document.getElementById("text").innerHTML = "<img id=\"myImage\"></img>" 
+			document.getElementById("myImage").src = image.src;
+			document.getElementById("myImage").style.visibility = "hidden";
+         	timeInSeconds = Math.random() * 4 + 2; // 2 - 6s 
+         	startTimeID= window.setTimeout("showStimulus()", timeInSeconds * 1000);
+         }
+         
+         function showStimulus() { 
+         	testActive = true;
+			var decideStimuli = Math.round(Math.random(2));
+			switch(decideStimuli){
+				case 0: //show sound
+					type.push(decideStimuli);
+					var audio = new Audio('elephantcub.mp3');
+					audio.play();
+					lastTimeColorChanged = new Date().getTime();
+					timeInSeconds = 4;
+					stopTimeID= window.setTimeout("stopTest(true)", timeInSeconds * 1000);
+				break;
+				case 1: //show picture
+					type.push(decideStimuli);
+					document.getElementById("myImage").style.visibility = "visible";
+					wasPicture = true;
+					lastTimeColorChanged = new Date().getTime();
+					timeInSeconds = 4;
+					stopTimeID= window.setTimeout("stopTest(true)", timeInSeconds * 1000);
+				break;
+			}
+         	
+         }
+         
+         function stopTest(wasTimeout) {
+			window.clearTimeout(stopTimeID);
+			if(wasTimeout){ //zeit abgelaufen
+				if(wasPicture){
+					pErrors++; //Fehler bei Bild
+				}else{
+					sErrors++; //Fehler bei Sound
+				}
+				timeoutCounter++;
+			}else{
+				var currTime = new Date().getTime();
+				var deltaTime = currTime - lastTimeColorChanged; 
+				times.push(deltaTime); 
+			}
+         	document.getElementById("time").innerHTML = deltaTime + "ms";
+			document.getElementById("count").innerHTML = (times.length+timeoutCounter);
+			document.getElementById("myImage").style.visibility = "hidden"
+         	testActive = false;
+			wasPicture = false;
+         	startTest();
+         }
+         
+         function stopExperiment() { 
+         	window.clearTimeout(startTimeID);
+			window.clearTimeout(stopTimeID);
+         	testActive = false;
+			wasPicture=false;
+         	var meanDeltaTimeSound = 0.0;
+			var meanDeltaTimePic = 0.0;
+			var soundCounter = 0;
+			var picCounter = 0;
+			/*
+			 * Berechne Durchschnittszeit für audio und visuellen Stimulus separat
+			 *
+			*/
+         	for (var i = 0; i < times.length; ++i) {
+					if(type[i]==0){
+						meanDeltaTimeSound += times[i];
+						soundCounter++;
+					}else{
+						meanDeltaTimePic += times[i];
+						picCounter++;
+					}
+				}
+         	meanDeltaTimeSound = Math.round(meanDeltaTimeSound / soundCounter);
+			meanDeltaTimePic = Math.round(meanDeltaTimePic / picCounter);
+         	var standardDerivationSound = 0.0;
+			var   standardDerivationPic = 0.0;
+         	for (var i = 0; i < times.length; ++i) {
+					if(type[i]==0){
+						var diff = (times[i] - meanDeltaTimeSound);
+						standardDerivationSound += diff * diff;
+					}else{
+						var diff = (times[i] - meanDeltaTimePic);
+						standardDerivationPic += diff * diff;
+					}
+         		}
+         	standardDerivationSound =  Math.round(Math.sqrt(standardDerivationSound / soundCounter)); 
+			standardDerivationPic =  Math.round(Math.sqrt(  standardDerivationPic / picCounter)); 
+         	document.getElementById("count").innerHTML = "Count: " + (times.length+timeoutCounter); 
+         	document.getElementById("mean sound stimulus").innerHTML = "Mean Sound Stimulus: " + meanDeltaTimeSound + "ms"; 
+			document.getElementById("mean pic stimulus").innerHTML = "Mean Picture Stimulus: " + meanDeltaTimePic + "ms";
+         	document.getElementById("sds").innerHTML = "SD sound: " + standardDerivationSound + "ms";		
+			document.getElementById("sdp").innerHTML = "SD picture: " + standardDerivationPic + "ms";
+			document.getElementById("errors").innerHTML = "Errors: " + errors
+			document.getElementById("sErrors").innerHTML = "Sound Errors: " + sErrors;
+			document.getElementById("pErrors").innerHTML = "Picture Errors" + pErrors;
+         	document.getElementById("instruction").innerHTML = "Press SPACE to start!"; 
+         	times = [];
+			errors = 0;
+			timeoutCounter=0;
+			sErrors=0;
+			pErrors=0;
+         	experimentActive = false; 
+         }
+         
+         document.onkeydown = onKey;
+         function onKey(e) { if (e == null) {
+                 e = window.event;
+             }
+         	switch (e.which || e.charCode || e.keyCode) { 
+         		case 32:
+         		// space
+         		if (!experimentActive) {
+         			startExperiment(); } 
+         			else {
+         				if (testActive) {
+         					stopTest();
+         				}else{
+							errors++;
+						}
+         			}
+         		break;
+         		case 65: // a
+         		if (experimentActive) {
+         			stopExperiment(); 
+         		}
+         		break;
+         		case 66:
+         		// b
+         		// here you can extend... alert("pressed the b key"); break;
+         	} 
+         }
+      </script>
+      <h1>
+         <p id="text">User Study</p>
+      </h1>
+      <h1 id="instruction">Press SPACE to start!</h1>
+      <p>
+	  
+      <p id="time"></p>
+      <p id="count"></p>
+      <p id="mean sound stimulus"></p>
+	  <p id="mean pic stimulus"></p>
+      <p id="sds"></p>
+	  <p id="sdp"></p>
+	  <p id="errors"></p>
+	  <p id="sErrors"></p>
+	  <p id="pErrors"></p>
+   </body>
+</html>
